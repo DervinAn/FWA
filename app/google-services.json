@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "774714889151",
+    "project_id": "fwca-82cfb",
+    "storage_bucket": "fwca-82cfb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:774714889151:android:3c7a3e7934f2f2c604070a",
+        "android_client_info": {
+          "package_name": "com.example.fwa"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAKTeuzFUkhZmH7XSYpnomjJHaWShogQbw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
