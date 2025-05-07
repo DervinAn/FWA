@@ -8,6 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.fwa.presentation.NavScreen
 import com.example.fwa.ui.theme.FWATheme
 import com.google.android.gms.security.ProviderInstaller
 
@@ -23,7 +24,7 @@ class MainActivity : ComponentActivity() {
         }
         setContent {
             FWATheme {
-              NavScreen()
+                NavScreen()
             }
         }
     }

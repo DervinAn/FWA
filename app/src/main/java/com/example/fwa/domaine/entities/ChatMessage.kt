@@ -1,4 +1,4 @@
-package com.example.fwa.entities
+package com.example.fwa.domaine.entities
 
 import java.util.UUID
 

@@ -1,4 +1,4 @@
-package com.example.fwa
+package com.example.fwa.presentation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -7,12 +7,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
@@ -22,6 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -32,6 +35,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.fwa.R
 import com.example.fwa.ui.theme.AppBackground
 import com.example.fwa.ui.theme.BlueGradient
 import com.example.fwa.ui.theme.PeachGradient
@@ -43,9 +48,9 @@ fun HomeScreen(navController: NavController) {
         modifier = Modifier
             .fillMaxSize()
             .background(AppBackground)
-            .safeContentPadding(),
+            .windowInsetsPadding(WindowInsets.systemBars),
         bottomBar = {
-            BottomNavigationBar()
+            BottomNavigationBar(navController)
         }
     ) {
         Column(
@@ -93,7 +98,11 @@ fun HomeScreen(navController: NavController) {
 
 
 @Composable
-fun BottomNavigationBar() {
+fun BottomNavigationBar(navController: NavController) {
+    // Track current destination from NavController
+    val currentBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = currentBackStackEntry?.destination?.route
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -102,52 +111,75 @@ fun BottomNavigationBar() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         NavigationBarItem(
-            selected = false,
-            onClick = { /* Handle click */ },
+            selected = currentRoute == Screen.Home.route,
+            onClick = { navController.navigate(Screen.Home.route) },
             icon = {
                 Icon(
                     painter = painterResource(id = R.drawable.home_agreement),
                     contentDescription = "Home",
-                    modifier = Modifier.size(25.dp)
+                    modifier = Modifier.size(25.dp),
+                    tint = if (currentRoute == Screen.Home.route) Color(0xFF4CAF50) else Color.Gray
                 )
             },
-            label = { Text("Home") }
+            label = {
+                Text(
+                    "Home",
+                    color = if (currentRoute == Screen.Home.route) Color(0xFF4CAF50) else Color.Gray
+                )
+            }
         )
         NavigationBarItem(
-            selected = false,
-            onClick = { /* Handle click */ },
+            selected = currentRoute == Screen.Chat.route,
+            onClick = { navController.navigate(Screen.Chat.route) },
             icon = {
                 Icon(
                     painter = painterResource(id = R.drawable.chatbot),
-                    contentDescription = "Search",
-                    modifier = Modifier.size(38.dp)
+                    contentDescription = "Chat",
+                    modifier = Modifier.size(38.dp),
+                    tint = if (currentRoute == Screen.Chat.route) Color(0xFF4CAF50) else Color.Gray
                 )
             },
-            label = { Text("Chat") }
+            label = {
+                Text(
+                    "Chat",
+                    color = if (currentRoute == Screen.Chat.route) Color(0xFF4CAF50) else Color.Gray
+                )
+            }
         )
         NavigationBarItem(
-            selected = false,
-            onClick = { /* Handle click */ },
+            selected = currentRoute == Screen.Community.route,
+            onClick = { navController.navigate(Screen.Community.route) },
             icon = {
                 Icon(
-                    Icons.Default.AccountCircle,
-                    contentDescription = "Profile"
+                    imageVector = Icons.Default.AccountCircle,
+                    contentDescription = "Community",
+                    tint = if (currentRoute == Screen.Community.route) Color(0xFF4CAF50) else Color.Gray
                 )
             },
-            label = { Text("Community") }
+            label = {
+                Text(
+                    "Community",
+                    color = if (currentRoute == Screen.Community.route) Color(0xFF4CAF50) else Color.Gray
+                )
+            }
         )
-
         NavigationBarItem(
-            selected = false,
-            onClick = { /* Handle click */ },
+            selected = currentRoute == Screen.Recipes.route,
+            onClick = { navController.navigate(Screen.Recipes.route) },
             icon = {
                 Icon(
                     painter = painterResource(id = R.drawable.cooking),
-                    contentDescription = "Profile",
-                    modifier = Modifier.size(30.dp)
+                    contentDescription = "Recipes",
+                    modifier = Modifier.size(30.dp),
+                    tint = if (currentRoute == Screen.Recipes.route) Color(0xFF4CAF50) else Color.Gray
                 )
             },
-            label = { Text("Recipes") }
+            label = {
+                Text(
+                    "Recipes",
+                    color = if (currentRoute == Screen.Recipes.route) Color(0xFF4CAF50) else Color.Gray
+                )
+            }
         )
     }
 }

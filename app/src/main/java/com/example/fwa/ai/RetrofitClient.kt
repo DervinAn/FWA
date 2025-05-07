@@ -1,39 +1,22 @@
 package com.example.fwa.ai
 
 
-import okhttp3.OkHttpClient
-import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
+import retrofit2.http.Headers
 import retrofit2.http.POST
 
-object HuggingFaceClient {
-    private const val BASE_URL = "https://api-inference.huggingface.co/" // Change the model if you prefer
-    private const val API_KEY = "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" // Replace with your Hugging Face API key
 
-    private val client = OkHttpClient.Builder()
-        .addInterceptor { chain ->
-            val request = chain.request().newBuilder()
-                .addHeader("Authorization", "Bearer $API_KEY")
-                .addHeader("Content-Type", "application/json")
-                .build()
-            chain.proceed(request)
-        }
-        .build()
+val retrofit = Retrofit.Builder()
+    .baseUrl("https://api.deepseek.com/") // Replace with DeepSeek's actual base URL
+    .addConverterFactory(GsonConverterFactory.create())
+    .build()
 
-    private val retrofit = Retrofit.Builder()
-        .baseUrl(BASE_URL)
-        .client(client)
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
 
-    val api: HuggingFaceApi = retrofit.create(HuggingFaceApi::class.java)
+interface DeepSeekAPI {
+    @Headers("Authorization: Bearer sk-ac57311753b3482a99dcf34a6f4927f5")
+    @POST("v1/chat")
+    suspend fun getChatResponse(@Body request: ChatRequest): ChatResponse
 }
 
-interface HuggingFaceApi {
-    @POST("models/HuggingFaceH4/zephyr-7b-beta")
-    suspend fun queryModel(@Body input: Map<String, String>): Response<List<Output>>
-}
-
-data class Output(val generated_text: String)

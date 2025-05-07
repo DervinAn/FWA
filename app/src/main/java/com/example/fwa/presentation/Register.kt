@@ -1,6 +1,7 @@
-package com.example.fwa
+package com.example.fwa.presentation
 
 
+import android.widget.Toast
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -39,12 +40,16 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.fwa.R
+import com.example.fwa.presentation.componenet.GradientButton
+import com.example.fwa.presentation.componenet.SocialLoginButtons
 import com.example.fwp.User
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
@@ -53,7 +58,7 @@ import com.google.firebase.ktx.Firebase
 
 @Composable
 fun AuthScreen(navController: NavController) {
-    var isLoginScreen by remember { mutableStateOf(false) }
+    var isLoginScreen by remember { mutableStateOf(true) }
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -67,12 +72,20 @@ fun AuthScreen(navController: NavController) {
                 LoginScreen(onSwitch = { isLoginScreen = false },
                     success = {
                         navController.navigate(Screen.Home.route){
+                            popUpTo(Screen.Authen.route) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
                         }
                     })
             } else {
                 SignUpScreen(onSwitch = { isLoginScreen = true },
                     success = {
                         navController.navigate(Screen.Home.route){
+                            popUpTo(Screen.Authen.route) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
                         }
                     }
                 )
@@ -120,27 +133,35 @@ fun LoginScreen(onSwitch: () -> Unit,success: ()-> Unit) {
                 label = { Text("Password") },
                 modifier = Modifier.fillMaxWidth()
             )
+            Text(logMessage)
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            val context = LocalContext.current
 
             GradientButton(
                 text = "Login",
                 onClick = {
-                    signIn(email, password) { success, error ->
-                        if (success) {
-                            getUserData { user ->
-                                logMessage = user?.let {
-                                    "✅ Signed in. ID: ${it.id}, Name: ${it.name}, Email: ${it.email}, Location: ${it.location}"
-                                } ?: "❌ Failed to fetch user data"
+                    if (email.isBlank() || password.isBlank()) {
+                        Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
+                    } else {
+                        signIn(email, password) { success, error ->
+                            if (success) {
+                                getUserData { user ->
+                                    logMessage = user?.let {
+                                        "✅ Signed in. ID: ${it.id}, Name: ${it.name}, Email: ${it.email}, Location: ${it.location}"
+                                    } ?: "❌ Failed to fetch user data"
+                                }
+                                success()
+                            } else {
+                                logMessage = "❌ Sign-in failed: $error"
                             }
-                            success()
-                        } else {
-                            logMessage = "❌ Sign-in failed: $error"
                         }
                     }
                 },
-                modifier = Modifier
+                modifier = Modifier,
             )
+
             Spacer(modifier = Modifier.height(16.dp))
 
 
@@ -153,7 +174,7 @@ fun LoginScreen(onSwitch: () -> Unit,success: ()-> Unit) {
 
 @Composable
 fun SignUpScreen(onSwitch: () -> Unit,success: ()-> Unit) {
-
+    val context = LocalContext.current
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
@@ -195,23 +216,29 @@ fun SignUpScreen(onSwitch: () -> Unit,success: ()-> Unit) {
                 onValueChange = { username = it },
                 label = { Text("Username") })
 
-            Spacer(modifier = Modifier.height(16.dp))
             Text(text = logMessage, modifier = Modifier.padding(top = 16.dp))
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             GradientButton(
                 onClick = {
-                    signUp(email, password, username) { success, error ->
-                         if (success) {
-                             logMessage = "✅ Sign-up successful"
-                             success()
-                        } else {
-                             logMessage = "❌ Sign-up failed: $error"
+                    if (email.isBlank() || password.isBlank() || username.isBlank()) {
+                        Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
+                    } else {
+                        signUp(email, password, username) { isSuccess, error ->
+                            if (isSuccess) {
+                                logMessage = "✅ Sign-up successful"
+                                success()
+                            } else {
+                                logMessage = "❌ Sign-up failed: $error"
+                            }
                         }
                     }
                 },
                 text = "Sign in",
                 modifier = Modifier
             )
+
 
 
             TextButton(onClick = onSwitch) {
@@ -372,68 +399,6 @@ fun AnimatedFoodBackground() {
     }
 }
 
-
-@Composable
-fun GradientButton(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(50.dp)
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(Color(0xD8C2CE4E), Color(0xFFADCB8F)),
-                    start = Offset(0f, 0f),
-                    end = Offset(400f, 0f) // Adjust for direction
-                ),
-                shape = RoundedCornerShape(10.dp)
-            )
-            .clickable { onClick() },
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text,
-            color = Color.White,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
-
-@Composable
-fun SocialLoginButtons(
-    onGoogleSignIn: () -> Unit,
-    onFacebookSignIn: () -> Unit
-) {
-    Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Button(
-            onClick = onGoogleSignIn,
-            colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-        ) {
-            Text("Continue with Google", color = Color.Black)
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Button(
-            onClick = onFacebookSignIn,
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4267B2)),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-        ) {
-            Text("Continue with Facebook", color = Color.White)
-        }
-    }
-}
 
 @Preview
 @Composable
