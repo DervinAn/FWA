@@ -9,8 +9,6 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,15 +19,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,8 +33,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -47,17 +41,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.fwa.R
+import com.example.fwa.data.AuthRepositoryImpl
+import com.example.fwa.domaine.usecase.auth.GetInfoUseCase
+import com.example.fwa.domaine.usecase.auth.SignInUseCase
+import com.example.fwa.domaine.usecase.auth.SignUpUseCase
 import com.example.fwa.presentation.componenet.GradientButton
-import com.example.fwa.presentation.componenet.SocialLoginButtons
-import com.example.fwp.User
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
 
 
 @Composable
-fun AuthScreen(navController: NavController) {
+fun AuthScreen(navController: NavController, viewModel: AuthViewModel) {
     var isLoginScreen by remember { mutableStateOf(true) }
 
     Surface(modifier = Modifier.fillMaxSize()) {
@@ -69,22 +63,23 @@ fun AuthScreen(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (isLoginScreen) {
-                LoginScreen(onSwitch = { isLoginScreen = false },
-                    success = {
-                        navController.navigate(Screen.Home.route){
-                            popUpTo(Screen.Authen.route) {
-                                inclusive = true
-                            }
+                LoginScreen(
+                    viewModel = viewModel,
+                    onSwitch = { isLoginScreen = false },
+                    onSuccess = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Authen.route) { inclusive = true }
                             launchSingleTop = true
                         }
-                    })
+                    }
+                )
             } else {
-                SignUpScreen(onSwitch = { isLoginScreen = true },
-                    success = {
-                        navController.navigate(Screen.Home.route){
-                            popUpTo(Screen.Authen.route) {
-                                inclusive = true
-                            }
+                SignUpScreen(
+                    viewModel = viewModel,
+                    onSwitch = { isLoginScreen = true },
+                    onSuccess = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Authen.route) { inclusive = true }
                             launchSingleTop = true
                         }
                     }
@@ -95,27 +90,30 @@ fun AuthScreen(navController: NavController) {
 }
 
 @Composable
-fun LoginScreen(onSwitch: () -> Unit,success: ()-> Unit) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        AnimatedFoodBackground()// ⬅️ Background layer
+fun LoginScreen(
+    viewModel: AuthViewModel,
+    onSwitch: () -> Unit,
+    onSuccess: () -> Unit
+) {
+    val context = LocalContext.current
+    val authState by viewModel.authState.collectAsState()
 
-        Column(
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        AnimatedFoodBackground()
+
+        Column (
             modifier = Modifier
                 .fillMaxSize()
                 .padding(32.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            var email by remember { mutableStateOf("") }
-            var password by remember { mutableStateOf("") }
-            var logMessage by remember { mutableStateOf("") }
+        ){
 
-            Text(
-                "Login",
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF333333)
-            )
+
+            Text("Login", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Color(0xFF333333))
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
@@ -133,11 +131,8 @@ fun LoginScreen(onSwitch: () -> Unit,success: ()-> Unit) {
                 label = { Text("Password") },
                 modifier = Modifier.fillMaxWidth()
             )
-            Text(logMessage)
 
             Spacer(modifier = Modifier.height(16.dp))
-
-            val context = LocalContext.current
 
             GradientButton(
                 text = "Login",
@@ -145,43 +140,51 @@ fun LoginScreen(onSwitch: () -> Unit,success: ()-> Unit) {
                     if (email.isBlank() || password.isBlank()) {
                         Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
                     } else {
-                        signIn(email, password) { success, error ->
-                            if (success) {
-                                getUserData { user ->
-                                    logMessage = user?.let {
-                                        "✅ Signed in. ID: ${it.id}, Name: ${it.name}, Email: ${it.email}, Location: ${it.location}"
-                                    } ?: "❌ Failed to fetch user data"
-                                }
-                                success()
-                            } else {
-                                logMessage = "❌ Sign-in failed: $error"
-                            }
-                        }
+                        viewModel.signIn(email, password)
                     }
                 },
-                modifier = Modifier,
+                modifier = Modifier
             )
+
 
             Spacer(modifier = Modifier.height(16.dp))
 
-
             TextButton(onClick = onSwitch) {
                 Text("Don't have an account? Sign Up")
+            }
+
+            // Observe auth state
+            when (authState) {
+                is UiState.Loading -> Text("🔄 Signing in...")
+                is UiState.Success -> {
+                    Text("✅ Signed in successfully")
+                    onSuccess()
+                    viewModel.clearAuthState()
+                }
+
+                is UiState.Error -> Text("❌ ${(authState as UiState.Error).message}")
+                else -> {}
             }
         }
     }
 }
 
 @Composable
-fun SignUpScreen(onSwitch: () -> Unit,success: ()-> Unit) {
+fun SignUpScreen(
+    viewModel: AuthViewModel,
+    onSwitch: () -> Unit,
+    onSuccess: () -> Unit
+) {
     val context = LocalContext.current
+    val authState by viewModel.authState.collectAsState()
+
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
-    var logMessage by remember { mutableStateOf("") }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        AnimatedFoodBackground()// ⬅️ Background layer
+        AnimatedFoodBackground()
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -189,6 +192,7 @@ fun SignUpScreen(onSwitch: () -> Unit,success: ()-> Unit) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Inputs...
 
             Text("Sign Up", style = MaterialTheme.typography.bodyLarge)
             Spacer(modifier = Modifier.height(16.dp))
@@ -214,121 +218,42 @@ fun SignUpScreen(onSwitch: () -> Unit,success: ()-> Unit) {
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
-                label = { Text("Username") })
-
-            Text(text = logMessage, modifier = Modifier.padding(top = 16.dp))
+                label = { Text("Username") },
+                modifier = Modifier.fillMaxWidth()
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             GradientButton(
+                text = "Sign Up",
                 onClick = {
                     if (email.isBlank() || password.isBlank() || username.isBlank()) {
                         Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
                     } else {
-                        signUp(email, password, username) { isSuccess, error ->
-                            if (isSuccess) {
-                                logMessage = "✅ Sign-up successful"
-                                success()
-                            } else {
-                                logMessage = "❌ Sign-up failed: $error"
-                            }
-                        }
+                        viewModel.signUp(email, password, username)
                     }
                 },
-                text = "Sign in",
                 modifier = Modifier
             )
 
+            // Observe auth state
+            when (authState) {
+                is UiState.Loading -> Text("🔄 Signing up...")
+                is UiState.Success<*> -> {
+                    Text("✅ Sign-up successful")
+                    onSuccess()
+                    viewModel.clearAuthState()
+                }
 
+                is UiState.Error -> Text("❌ ${(authState as UiState.Error).message}")
+                else -> {}
+            }
 
             TextButton(onClick = onSwitch) {
                 Text("Already have an account? Login")
             }
-
-            SocialLoginButtons(
-                onGoogleSignIn = {
-                    // Launch Google Sign-In Intent
-                },
-                onFacebookSignIn = {
-                    // Launch Facebook Sign-In Flow
-                }
-            )
         }
     }
-
-}
-
-
-fun signUp(
-    email: String,
-    password: String,
-    username: String,
-    onResult: (Boolean, String?) -> Unit
-) {
-    val auth = Firebase.auth
-    val db = Firebase.firestore
-
-    auth.createUserWithEmailAndPassword(email, password)
-        .addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                val uid = auth.currentUser?.uid
-                val photoUrl = auth.currentUser?.photoUrl?.toString() ?: ""
-
-                if (uid != null) {
-                    val user = User(
-                        name = username,
-                        email = email,
-                        photoUrl = photoUrl,
-                        location = ""
-                    )
-
-                    db.collection("users").document(uid).set(user)
-                        .addOnSuccessListener {
-                            onResult(true, null)
-                        }
-                        .addOnFailureListener { e ->
-                            onResult(false, e.message)
-                        }
-                } else {
-                    onResult(false, "UID is null after sign-up")
-                }
-            } else {
-                onResult(false, task.exception?.localizedMessage ?: "Unknown error during sign-up")
-            }
-        }
-}
-
-fun signIn(
-    email: String,
-    password: String,
-    onResult: (Boolean, String?) -> Unit
-) {
-    Firebase.auth.signInWithEmailAndPassword(email, password)
-        .addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                onResult(true, null)
-            } else {
-                onResult(false, task.exception?.message)
-            }
-        }
-}
-
-fun getUserData(onResult: (User?) -> Unit) {
-    val uid = Firebase.auth.currentUser?.uid ?: return onResult(null)
-    val db = Firebase.firestore
-
-    db.collection("users").document(uid).get()
-        .addOnSuccessListener { document ->
-            if (document.exists()) {
-                val user = document.toObject(User::class.java)?.copy(id = document.id)
-                onResult(user)
-            } else {
-                onResult(null)
-            }
-        }
-        .addOnFailureListener {
-            onResult(null)
-        }
 }
 
 
@@ -403,5 +328,14 @@ fun AnimatedFoodBackground() {
 @Preview
 @Composable
 private fun AuthScreenPreview() {
-
+    val navController = rememberNavController()
+    val authRepository = AuthRepositoryImpl() // ✅ Create instance
+    AuthScreen(
+        navController = navController,
+        viewModel = AuthViewModel(
+            authSi = SignInUseCase(authRepository),
+            authSp = SignUpUseCase(authRepository),
+            authGetInfo = GetInfoUseCase(authRepository)
+        ),
+    )
 }

@@ -1,5 +1,7 @@
 package com.example.fwa.presentation
 
+import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,6 +25,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -31,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImagePainter
@@ -39,11 +44,32 @@ import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
 
 
+@SuppressLint("RememberReturnType")
 @Composable
 fun RecipeDetailScreen(
     navController: NavController,
-    recipe: Recipe // Pass the recipe to display
+    recipeId: String?,
+    viewModel: RecipeViewModel = viewModel()
 ) {
+    val uiState = viewModel.uiState.collectAsState().value
+
+    // Check if the recipe is successfully fetched
+    val recipe = when (uiState) {
+        is RecipeUiState.Success -> uiState.recipes.firstOrNull { it.id == recipeId }
+        else -> null
+    }
+
+
+    if (recipe == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("Recipe not found.", color = Color.Red)
+        }
+        return
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
@@ -170,29 +196,4 @@ fun RecipeImageHeader(imageUrl: String, title: String) {
 @Composable
 private fun Preview() {
     val navController = rememberNavController()
-    RecipeDetailScreen(navController = navController,Recipe(
-            id = "1",
-    title = "Creamy Garlic Chicken",
-    ingredients = listOf(
-        "4 chicken breasts",
-        "2 tbsp olive oil",
-        "4 garlic cloves, minced",
-        "1 cup heavy cream",
-        "1/2 cup chicken broth",
-        "Salt and pepper to taste",
-        "Fresh parsley for garnish"
-    ),
-    steps = listOf(
-        "Heat olive oil in a skillet over medium heat.",
-        "Add chicken breasts and cook until golden and cooked through. Remove and set aside.",
-        "In the same pan, sauté minced garlic until fragrant.",
-        "Pour in chicken broth and heavy cream. Stir and let it simmer for 5 minutes.",
-        "Return the chicken to the pan and coat with the creamy sauce.",
-        "Simmer for another 5 minutes until everything is well combined.",
-        "Serve hot and garnish with fresh parsley."
-    ),
-    imageUrl = "https://www.budgetbytes.com/wp-content/uploads/2024/02/Creamy-Garlic-Chicken-Pan.jpg", // example Unsplash image
-    postedBy = "Chef Olivia"
-    )
-    )
 }
