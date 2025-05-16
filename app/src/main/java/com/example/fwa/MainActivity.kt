@@ -8,7 +8,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.fwa.data.AuthRepositoryImpl
 import com.example.fwa.presentation.NavScreen
 import com.example.fwa.ui.theme.FWATheme
 import com.example.fwp.Comment
@@ -22,8 +21,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val authRepository = AuthRepositoryImpl() // ✅ Create instance
-        setContent {
+            setContent {
             FWATheme {
               NavScreen()
             }

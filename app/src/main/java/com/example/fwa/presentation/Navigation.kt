@@ -18,7 +18,6 @@ import com.example.fwa.domaine.usecase.recipe.DeleteRecipeUseCase
 import com.example.fwa.domaine.usecase.recipe.GetAllRecipesUseCase
 import com.example.fwa.domaine.usecase.recipe.GetRecipeByIdUseCase
 import com.example.fwa.domaine.usecase.recipe.ModifyRecipeUseCase
-import com.example.fwp.Recipe
 
 
 sealed class Screen(val route:String){
@@ -36,31 +35,6 @@ sealed class Screen(val route:String){
 fun NavScreen(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
     val authRepository = AuthRepositoryImpl() // ✅ Create instance
-    val sampleRecipe = Recipe(
-        id = "1",
-        title = "Creamy Garlic Chicken",
-        ingredients = listOf(
-            "4 chicken breasts",
-            "2 tbsp olive oil",
-            "4 garlic cloves, minced",
-            "1 cup heavy cream",
-            "1/2 cup chicken broth",
-            "Salt and pepper to taste",
-            "Fresh parsley for garnish"
-        ),
-        steps = listOf(
-            "Heat olive oil in a skillet over medium heat.",
-            "Add chicken breasts and cook until golden and cooked through. Remove and set aside.",
-            "In the same pan, sauté minced garlic until fragrant.",
-            "Pour in chicken broth and heavy cream. Stir and let it simmer for 5 minutes.",
-            "Return the chicken to the pan and coat with the creamy sauce.",
-            "Simmer for another 5 minutes until everything is well combined.",
-            "Serve hot and garnish with fresh parsley."
-        ),
-        imageUrl = "https://images.unsplash.com/photo-1605479729273-26d8d0ed6fc3", // example Unsplash image
-        postedBy = "Chef Olivia"
-    )
-
     NavHost(
         navController = navController,
         startDestination = Screen.Authen.route,
