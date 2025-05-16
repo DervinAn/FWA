@@ -93,7 +93,7 @@ fun CommunityFeedScreen(
                         .padding(paddingValues)
                         .padding(16.dp)
                 ) {
-                    items(posts.size) { post ->
+                    items(posts.size, key = {index -> posts[index].id}) { post ->
                         CommunityPostItem(
                             post = posts[post],
                             onLike = { viewModel.toggleLike(posts[post]) },
